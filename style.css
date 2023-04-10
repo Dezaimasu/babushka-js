@@ -1,0 +1,101 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+#table {
+  background-color: darkgreen;
+  min-height: 50px;
+  height: 100%;
+  width: 50%;
+}
+
+#templates {
+  display: none;
+}
+
+#stock-waste-foundations,
+#piles {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 50px 100px;
+}
+
+#stock-waste-foundations > div,
+#piles > div {
+  width: 100px;
+}
+
+#piles .pile .card {
+  position: relative;
+}
+
+#piles .pile .card:nth-child(1) {z-index: 1;}
+#piles .pile .card:nth-child(2) {z-index: 2;}
+#piles .pile .card:nth-child(3) {z-index: 3;}
+#piles .pile .card:nth-child(4) {z-index: 4;}
+#piles .pile .card:nth-child(5) {z-index: 5;}
+#piles .pile .card:nth-child(6) {z-index: 6;}
+#piles .pile .card:nth-child(7) {z-index: 7;}
+#piles .pile .card:nth-child(8) {z-index: 8;}
+#piles .pile .card:nth-child(9) {z-index: 9;}
+#piles .pile .card:nth-child(10) {z-index: 10;}
+#piles .pile .card:nth-child(11) {z-index: 11;}
+#piles .pile .card:nth-child(12) {z-index: 12;}
+#piles .pile .card:nth-child(13) {z-index: 13;}
+
+#piles .pile .card:not(:first-child) {
+  margin-top: -120px;
+}
+
+.card, .foundation:empty {
+  box-sizing: border-box;
+  border: 2px solid black;
+  border-radius: 6px;
+  height: 140px;
+  width: 100px;
+}
+
+.card.card-back {
+  background-color: aquamarine;
+}
+
+.card.card-face {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  background-color: white;
+  user-select: none;
+}
+
+.card.card-face.clubs, .card.card-face.spades {
+  color: black;
+}
+.card.card-face.diamonds, .card.card-face.hearts {
+  color: red;
+}
+
+.card.card-face > .card-top,
+.card.card-face > .card-bot {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+}
+
+.card.card-face > .card-top > div,
+.card.card-face > .card-bot > div {
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.card.card-face > .card-bot {
+  transform: rotate(180deg);
+}
+
+.card.card-face > .card-mid {
+  text-align: center;
+  font-size: 32px;
+}
