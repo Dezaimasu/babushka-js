@@ -4,7 +4,7 @@ const suits = {
   diamonds: '♦',
   hearts  : '♥',
 };
-const ranks = [...Array(9).keys()].map(r => (r + 2).toString()).concat(['J', 'Q', 'K', 'A']);
+const ranks = ['A'].concat([...Array(9).keys()].map(r => (r + 2).toString()), ['J', 'Q', 'K']);
 
 function buildDeck(){
   let deck = [];
@@ -56,7 +56,10 @@ function buildCardNode(card){
 }
 
 function moveCard(card, newSlotName, upturned = true){
-  card.slotName && slots[card.slotName].cards.pop();
+  if (card.slotName) {
+    const slotCards = slots[card.slotName].cards;
+    slotCards.splice(slotCards.indexOf(card), 1);
+  }
 
   slots[newSlotName].cards.push(card);
   slots[newSlotName].node.insertBefore(card.node, null);
@@ -66,6 +69,16 @@ function moveCard(card, newSlotName, upturned = true){
   card.node.dataset.upturned = upturned ? '1': '0';
 
   toggleActiveCard();
+}
+
+function moveCardsPile(card, newSlotName){
+  const slotCards = slots[card.slotName].cards,
+    cardIndexInSlot = slotCards.indexOf(card),
+    cardIndexesToMove = slotCards.slice(cardIndexInSlot).map(card => card.index);
+
+  cardIndexesToMove.forEach(cardIndex => {
+    moveCard(slotCards.find(card => card.index === cardIndex), newSlotName);
+  });
 }
 
 function placeCardOnTable(card, slotName, upturned){
@@ -139,6 +152,8 @@ function canBePlacedHere(clickedCard){
 }
 
 function cardClickHandler(e){
+  e.stopPropagation();
+
   const card = deck[e.currentTarget.dataset.index];
 
   if (card.slotName === 'stock' && canBeMoved(card)) {
@@ -153,7 +168,7 @@ function cardClickHandler(e){
 
   if (activeCard) {
     if (activeCard.index !== card.index && canBePlacedHere(card)) {
-      moveCard(activeCard, card.slotName);
+      moveCardsPile(activeCard, card.slotName);
     }
     toggleActiveCard();
 

@@ -7,7 +7,7 @@ html, body {
   background-color: darkgreen;
   min-height: 50px;
   height: 100%;
-  width: 50%;
+  width: 80%;
 }
 
 #templates {
@@ -33,6 +33,11 @@ html, body {
 }
 
 #stock-waste-foundations > #waste > .card:not(:first-child) {
+  /*margin-top: -139px;*/
+  margin-top: -120px; /* TODO: remove after debug */
+}
+
+#stock-waste-foundations > .foundation > .card:not(:first-child) {
   /*margin-top: -139px;*/
   margin-top: -120px; /* TODO: remove after debug */
 }
