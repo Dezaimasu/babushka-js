@@ -62,11 +62,15 @@ html, body {
   user-select: none;
 }
 
+.card * {
+  pointer-events: none;
+}
+
 .card[data-upturned='0'] {
   background-color: aquamarine;
 }
 .card[data-upturned='0'] * {
-  display: none !important;
+  /*display: none !important;*/ /* TODO: remove after debug */
 }
 
 .card[data-suit='spades'],

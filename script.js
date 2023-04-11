@@ -24,6 +24,7 @@ function buildDeck(){
         index   : null,
         node    : null,
         slotName: null,
+        upturned: false,
         suit,
         icon,
         rank,
@@ -54,20 +55,20 @@ function buildCardNode(card){
 }
 
 function moveCard(card, newSlotName, upturned = true){
-  if (card.slotName) {
-  	const removedCard = slots[card.slotName].cards.pop();
-    if (removedCard.suit !== card.suit || removedCard.rank !== card.rank) {
-      alert('ERROR'); // implied we can only remove last card
-    }
-  }
+  card.slotName && slots[card.slotName].cards.pop();
 
-  upturned = true; // TODO: remove after debug
   card.node.dataset.upturned = upturned ? '1': '0';
   card.node.dataset.debug = `${card.index}-${newSlotName}`; // TODO: remove after debug
 
   slots[newSlotName].cards.push(card);
   slots[newSlotName].node.insertBefore(card.node, null);
+
   card.slotName = newSlotName;
+  card.upturned = upturned;
+  card.node.dataset.upturned = upturned ? '1': '0';
+  card.node.dataset.debug = `${card.index}-${newSlotName}`; // TODO: remove after debug
+
+  toggleActiveCard();
 }
 
 function placeCardOnTable(card, slotName, upturned){
@@ -91,44 +92,65 @@ const slots = {
   pile6       : {cards: [], node: document.querySelector('#pile6')},
 };
 
-function moveCardsBetweenStockAndWaste(){
-  const stockCards = slots.stock.cards;
-
-  if (stockCards.length === 0) {
-    const wasteCardIndexes = slots.waste.cards.map(card => card.index);
-    wasteCardIndexes.reverse().forEach(cardIndex => {
-      moveCard(deck[cardIndex], 'stock', false);
-    });
-  } else {
-    moveCard(stockCards.at(-1), 'waste');
-  }
-}
-
 const styleElem = document.createElement('style');
 document.head.appendChild(styleElem);
 
 let activeCard = null;
 
-function toggleActiveCard(card){
-  if (activeCard && activeCard.index === card.index) {
-    activeCard = null;
-    styleElem.sheet.cssRules.length > 0 && styleElem.sheet.deleteRule(0);
-    return;
-  }
-
-  activeCard = card;
-
+function toggleActiveCard(card = null){
   styleElem.sheet.cssRules.length > 0 && styleElem.sheet.deleteRule(0);
-  styleElem.sheet.insertRule(`[data-index='${activeCard.index}'] {box-shadow: 4px 4px purple inset, -4px -4px purple inset;}`);
+
+  if (card) {
+    activeCard = card;
+    styleElem.sheet.insertRule(`[data-index='${activeCard.index}'] {box-shadow: 4px 4px purple inset, -4px -4px purple inset;}`);
+  } else {
+    activeCard = null;
+  }
+}
+
+function isLast(card){
+  return slots[card.slotName].cards.at(-1).index === card.index;
+}
+
+function isMovable(card){
+  if (card.slotName.startsWith('pile')) {
+    return card.upturned || isLast(card);
+  } else {
+    return isLast(card);
+  }
 }
 
 function cardClickHandler(e){
-  const slot = slots[e.currentTarget.id];
-  if (slot.cards.length === 0) {
+  const card = deck[e.currentTarget.dataset.index];
+
+  if (card.slotName === 'stock' && isMovable(card)) {
+  	moveCard(card, 'waste');
+    return;
+  }
+
+  if (activeCard) {
+    if (activeCard.index === card.index) {
+      toggleActiveCard();
+    } else {
+      console.log('moving');
+      // TODO: check if card can be moved here, then move
+    }
+  } else {
+    if (isMovable(card)) {
+      toggleActiveCard(card);
+    }
+  }
+}
+
+function moveWasteToStock(){
+  if (slots.stock.cards.length > 0) {
   	return;
   }
 
-  toggleActiveCard(slot.cards.at(-1));
+  const wasteCardIndexes = slots.waste.cards.map(card => card.index);
+  wasteCardIndexes.reverse().forEach(cardIndex => {
+    moveCard(deck[cardIndex], 'stock', false);
+  });
 }
 
 function placeCardsOnTable(){
@@ -150,12 +172,11 @@ function placeCardsOnTable(){
 }
 
 function initListeners(){
-  slots.stock.node.addEventListener('click', moveCardsBetweenStockAndWaste);
+  deck.forEach(card => {
+    card.node.addEventListener('click', cardClickHandler);
+  });
 
-  slots.waste.node.addEventListener('click', cardClickHandler);
-  for (let i = 0, len = 7; i < len; i++) {
-    slots[`pile${i}`].node.addEventListener('click', cardClickHandler);
-  }
+  document.querySelector('#stock').addEventListener('click', moveWasteToStock);
 }
 
 placeCardsOnTable();
