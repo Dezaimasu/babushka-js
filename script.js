@@ -20,7 +20,7 @@ function buildDeck(){
 
   Object.entries(suits).forEach(([suit, icon]) => {
     ranks.forEach(rank => {
-      const newCard = {suit, icon, rank, position: null};
+      const newCard = {suit, icon, rank, slotName: null, slotIndex: null};
       deck.push(newCard);
     });
   });
@@ -28,46 +28,63 @@ function buildDeck(){
   return shuffle(deck);
 }
 
-function drawCardBack(position){
-  const newCard = document.querySelector('#templates > .card-back').cloneNode(true);
-
-  position.insertBefore(newCard, null);
-}
-
-function drawCardFace(position, card){
-  const newCard = document.querySelector('#templates > .card-face').cloneNode(true);
-  newCard.classList.add(card.suit);
-
-  newCard.querySelector('.card-top').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div>${card.rank}<br>${card.icon}</div>`;
-  newCard.querySelector('.card-mid').innerHTML = `<div>${card.icon}</div>`;
-  newCard.querySelector('.card-bot').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div>${card.rank}<br>${card.icon}</div>`;
-
-  position.insertBefore(newCard, null);
-}
-
 const deck = buildDeck();
 
+function drawCard(card){
+  const cardNode = document.querySelector('#templates > .card').cloneNode(true);
+  cardNode.dataset.suit = card.suit;
 
+  cardNode.querySelector('.card-top').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div class="debug"></div><div>${card.rank}<br>${card.icon}</div>`;
+  cardNode.querySelector('.card-mid').innerHTML = `<div>${card.icon}</div>`;
+  cardNode.querySelector('.card-bot').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div class="debug"></div><div>${card.rank}<br>${card.icon}</div>`;
 
+  return cardNode;
+}
 
+function placeCard(card, slotName, upturned){
+  const cardNode = drawCard(card);
+  // upturned = true; // TODO: remove after debug
+  cardNode.dataset.upturned = upturned ? '1': '0';
+  cardNode.dataset.slot = slotName; // TODO: remove after debug
 
+  const slot = slots[slotName];
+  slot.node.insertBefore(cardNode, null);
+  slot.cards.push(card);
+  card.slotName = slotName;
+}
+
+const slots = {
+  stock       : {cards: [], node: document.querySelector('#stock')},
+  waste       : {cards: [], node: document.querySelector('#waste')},
+  foundation0 : {cards: [], node: document.querySelector('#foundation0')},
+  foundation1 : {cards: [], node: document.querySelector('#foundation1')},
+  foundation2 : {cards: [], node: document.querySelector('#foundation2')},
+  foundation3 : {cards: [], node: document.querySelector('#foundation3')},
+  pile0       : {cards: [], node: document.querySelector('#pile0')},
+  pile1       : {cards: [], node: document.querySelector('#pile1')},
+  pile2       : {cards: [], node: document.querySelector('#pile2')},
+  pile3       : {cards: [], node: document.querySelector('#pile3')},
+  pile4       : {cards: [], node: document.querySelector('#pile4')},
+  pile5       : {cards: [], node: document.querySelector('#pile5')},
+  pile6       : {cards: [], node: document.querySelector('#pile6')},
+};
+
+let cardIndex = 0;
 for (let pileIndex = 0, pilesTotal = 7; pileIndex < pilesTotal; pileIndex++) {
-  const pile = document.querySelector(`#pile-${pileIndex}`);
-
-  for (let cardIndex = 0, cardsTotal = pileIndex; cardIndex <= cardsTotal; cardIndex++) {
-    const selectedCard = deck[pileIndex + cardIndex];
-    selectedCard.position = `pile-${pileIndex}--num-${cardIndex}`;
-
-    if (cardIndex === cardsTotal) {
-      drawCardFace(pile, selectedCard);
-    } else {
-      drawCardBack(pile);
-    }
+  for (let indexInPile = 0, cardsInPileTotal = pileIndex; indexInPile <= cardsInPileTotal; indexInPile++) {
+    placeCard(
+      deck[cardIndex++],
+      `pile${pileIndex}`,
+      indexInPile === cardsInPileTotal
+    );
   }
 }
 
-const stock = document.querySelector('#stock');
-drawCardBack(stock);
+const cardsInPiles = 28;
+deck.slice(cardsInPiles).forEach(card => {
+  placeCard(card, 'stock', false);
+});
 
-const waste = document.querySelector('#waste');
-drawCardFace(waste, deck[7]);
+deck.forEach(card => {
+  console.log(card.slotName);
+});

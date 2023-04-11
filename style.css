@@ -27,29 +27,20 @@ html, body {
   width: 100px;
 }
 
-#piles .pile .card {
-  position: relative;
+#stock-waste-foundations > #stock > .card:not(:first-child) {
+  margin-top: -139px;
 }
 
-#piles .pile .card:nth-child(1) {z-index: 1;}
-#piles .pile .card:nth-child(2) {z-index: 2;}
-#piles .pile .card:nth-child(3) {z-index: 3;}
-#piles .pile .card:nth-child(4) {z-index: 4;}
-#piles .pile .card:nth-child(5) {z-index: 5;}
-#piles .pile .card:nth-child(6) {z-index: 6;}
-#piles .pile .card:nth-child(7) {z-index: 7;}
-#piles .pile .card:nth-child(8) {z-index: 8;}
-#piles .pile .card:nth-child(9) {z-index: 9;}
-#piles .pile .card:nth-child(10) {z-index: 10;}
-#piles .pile .card:nth-child(11) {z-index: 11;}
-#piles .pile .card:nth-child(12) {z-index: 12;}
-#piles .pile .card:nth-child(13) {z-index: 13;}
+#stock-waste-foundations > #waste > .card:not(:first-child) {
+  margin-top: -139px;
+}
 
 #piles .pile .card:not(:first-child) {
   margin-top: -120px;
 }
 
 .card, .foundation:empty {
+  position: relative;
   box-sizing: border-box;
   border: 2px solid black;
   border-radius: 6px;
@@ -57,11 +48,7 @@ html, body {
   width: 100px;
 }
 
-.card.card-back {
-  background-color: aquamarine;
-}
-
-.card.card-face {
+.card {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -70,32 +57,50 @@ html, body {
   user-select: none;
 }
 
-.card.card-face.clubs, .card.card-face.spades {
+.card[data-upturned='0'] {
+  background-color: aquamarine;
+}
+.card[data-upturned='0'] * {
+  display: none !important;
+}
+
+.card[data-suit='spades'],
+.card[data-suit='clubs'] {
   color: black;
 }
-.card.card-face.diamonds, .card.card-face.hearts {
+.card[data-suit='diamonds'],
+.card[data-suit='hearts'] {
   color: red;
 }
 
-.card.card-face > .card-top,
-.card.card-face > .card-bot {
+.card > .card-top,
+.card > .card-bot {
   display: flex;
   justify-content: space-between;
   padding: 5px;
 }
 
-.card.card-face > .card-top > div,
-.card.card-face > .card-bot > div {
+.card > .card-top > div,
+.card > .card-bot > div {
   text-align: center;
   font-weight: bold;
   font-size: 16px;
 }
 
-.card.card-face > .card-bot {
+.card > .card-bot {
   transform: rotate(180deg);
 }
 
-.card.card-face > .card-mid {
+.card > .card-mid {
   text-align: center;
   font-size: 32px;
+}
+
+/* TODO: remove after debug */
+.card[data-slot]::before {
+  content: attr(data-slot);
+  position: absolute;
+  color: darkblue;
+  left: 33px;
+  top: 1px;
 }
