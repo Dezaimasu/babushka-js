@@ -20,7 +20,14 @@ function buildDeck(){
 
   Object.entries(suits).forEach(([suit, icon]) => {
     ranks.forEach(rank => {
-      const newCard = {suit, icon, rank, slotName: null, index: null};
+      const newCard = {
+        index   : null,
+        node    : null,
+        slotName: null,
+        suit,
+        icon,
+        rank,
+      };
       deck.push(newCard);
     });
   });
@@ -35,42 +42,37 @@ function buildDeck(){
 
 const deck = buildDeck();
 
-function drawCard(card){
-  const cardNode = document.querySelector('#templates > .card').cloneNode(true);
+function buildCardNode(card){
+  card.node = document.querySelector('#templates > .card').cloneNode(true);
 
-  cardNode.querySelector('.card-top').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div class="debug"></div><div>${card.rank}<br>${card.icon}</div>`;
-  cardNode.querySelector('.card-mid').innerHTML = `<div>${card.icon}</div>`;
-  cardNode.querySelector('.card-bot').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div class="debug"></div><div>${card.rank}<br>${card.icon}</div>`;
+  card.node.dataset.suit = card.suit;
+  card.node.dataset.index = card.index;
 
-  return cardNode;
+  card.node.querySelector('.card-top').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div class="debug"></div><div>${card.rank}<br>${card.icon}</div>`;
+  card.node.querySelector('.card-mid').innerHTML = `<div>${card.icon}</div>`;
+  card.node.querySelector('.card-bot').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div class="debug"></div><div>${card.rank}<br>${card.icon}</div>`;
 }
 
-function placeCard(card, slotName, upturned){
-  const cardNode = drawCard(card);
-  upturned = true; // TODO: remove after debug
-  cardNode.dataset.upturned = upturned ? '1': '0';
-  cardNode.dataset.suit = card.suit;
-  cardNode.dataset.index = card.index;
-  cardNode.dataset.debug = `${card.index}-${slotName}`; // TODO: remove after debug
-
-  const slot = slots[slotName];
-  slot.node.insertBefore(cardNode, null);
-  slot.cards.push(card);
-  card.slotName = slotName;
-}
-
-function removeCard(card){
-  document.querySelector(`.card[data-index='${card.index}']`).remove();
-}
-
-function moveCard(card, from, to, upturned = true){
-  const removedCard = slots[from].cards.pop();
-  if (removedCard.suit !== card.suit || removedCard.rank !== card.rank) {
-  	alert('ERROR');
+function moveCard(card, newSlotName, upturned = true){
+  if (card.slotName) {
+  	const removedCard = slots[card.slotName].cards.pop();
+    if (removedCard.suit !== card.suit || removedCard.rank !== card.rank) {
+      alert('ERROR'); // implied we can only remove last card
+    }
   }
 
-  removeCard(card);
-  placeCard(card, to, upturned);
+  upturned = true; // TODO: remove after debug
+  card.node.dataset.upturned = upturned ? '1': '0';
+  card.node.dataset.debug = `${card.index}-${newSlotName}`; // TODO: remove after debug
+
+  slots[newSlotName].cards.push(card);
+  slots[newSlotName].node.insertBefore(card.node, null);
+  card.slotName = newSlotName;
+}
+
+function placeCardOnTable(card, slotName, upturned){
+  buildCardNode(card);
+  moveCard(card, slotName, upturned);
 }
 
 const slots = {
@@ -95,10 +97,10 @@ function moveCardsBetweenStockAndWaste(){
   if (stockCards.length === 0) {
     const wasteCardIndexes = slots.waste.cards.map(card => card.index);
     wasteCardIndexes.reverse().forEach(cardIndex => {
-      moveCard(deck[cardIndex], 'waste', 'stock', false);
+      moveCard(deck[cardIndex], 'stock', false);
     });
   } else {
-    moveCard(stockCards.at(-1), 'stock', 'waste');
+    moveCard(stockCards.at(-1), 'waste');
   }
 }
 
@@ -129,11 +131,11 @@ function cardClickHandler(e){
   toggleActiveCard(slot.cards.at(-1));
 }
 
-function init(){
+function placeCardsOnTable(){
   let cardIndex = 0;
   for (let pileIndex = 0, pilesTotal = 7; pileIndex < pilesTotal; pileIndex++) {
     for (let indexInPile = 0, cardsInPileTotal = pileIndex; indexInPile <= cardsInPileTotal; indexInPile++) {
-      placeCard(
+      placeCardOnTable(
         deck[cardIndex++],
         `pile${pileIndex}`,
         indexInPile === cardsInPileTotal
@@ -143,9 +145,11 @@ function init(){
 
   const cardsInPiles = 28;
   deck.slice(cardsInPiles).forEach(card => {
-    placeCard(card, 'stock', false);
+    placeCardOnTable(card, 'stock', false);
   });
+}
 
+function initListeners(){
   slots.stock.node.addEventListener('click', moveCardsBetweenStockAndWaste);
 
   slots.waste.node.addEventListener('click', cardClickHandler);
@@ -154,4 +158,5 @@ function init(){
   }
 }
 
-init();
+placeCardsOnTable();
+initListeners();
