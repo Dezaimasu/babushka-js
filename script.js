@@ -102,6 +102,33 @@ function moveCardsBetweenStockAndWaste(){
   }
 }
 
+const styleElem = document.createElement('style');
+document.head.appendChild(styleElem);
+
+let activeCard = null;
+
+function toggleActiveCard(card){
+  if (activeCard && activeCard.index === card.index) {
+    activeCard = null;
+    styleElem.sheet.cssRules.length > 0 && styleElem.sheet.deleteRule(0);
+    return;
+  }
+
+  activeCard = card;
+
+  styleElem.sheet.cssRules.length > 0 && styleElem.sheet.deleteRule(0);
+  styleElem.sheet.insertRule(`[data-index='${activeCard.index}'] {box-shadow: 4px 4px purple inset, -4px -4px purple inset;}`);
+}
+
+function cardClickHandler(e){
+  const slot = slots[e.currentTarget.id];
+  if (slot.cards.length === 0) {
+  	return;
+  }
+
+  toggleActiveCard(slot.cards.at(-1));
+}
+
 function init(){
   let cardIndex = 0;
   for (let pileIndex = 0, pilesTotal = 7; pileIndex < pilesTotal; pileIndex++) {
@@ -120,6 +147,11 @@ function init(){
   });
 
   slots.stock.node.addEventListener('click', moveCardsBetweenStockAndWaste);
+
+  slots.waste.node.addEventListener('click', cardClickHandler);
+  for (let i = 0, len = 7; i < len; i++) {
+    slots[`pile${i}`].node.addEventListener('click', cardClickHandler);
+  }
 }
 
 init();
