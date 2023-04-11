@@ -28,18 +28,23 @@ html, body {
 }
 
 #stock-waste-foundations > #stock > .card:not(:first-child) {
-  margin-top: -139px;
+  /*margin-top: -139px;*/
+  margin-top: -120px; /* TODO: remove after debug */
 }
 
 #stock-waste-foundations > #waste > .card:not(:first-child) {
-  margin-top: -139px;
+  /*margin-top: -139px;*/
+  margin-top: -120px; /* TODO: remove after debug */
 }
 
 #piles .pile .card:not(:first-child) {
   margin-top: -120px;
 }
 
-.card, .foundation:empty {
+.card,
+#stock:empty,
+#waste:empty,
+.foundation:empty {
   position: relative;
   box-sizing: border-box;
   border: 2px solid black;
@@ -97,10 +102,10 @@ html, body {
 }
 
 /* TODO: remove after debug */
-.card[data-slot]::before {
-  content: attr(data-slot);
+.card[data-debug]::before {
+  content: attr(data-debug);
   position: absolute;
   color: darkblue;
-  left: 33px;
+  left: 20px;
   top: 1px;
 }
