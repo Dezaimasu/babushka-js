@@ -1,8 +1,8 @@
 const suits = {
+  spades  : '♠',
   clubs   : '♣',
   diamonds: '♦',
   hearts  : '♥',
-  spades  : '♠',
 };
 const ranks = [...Array(9).keys()].map(r => (r + 2).toString()).concat(['J', 'Q', 'K', 'A']);
 
@@ -21,10 +21,11 @@ function buildDeck(){
   Object.entries(suits).forEach(([suit, icon]) => {
     ranks.forEach(rank => {
       const newCard = {
-        index   : null,
-        node    : null,
-        slotName: null,
-        upturned: false,
+        index     : null,
+        node      : null,
+        slotName  : null,
+        upturned  : false,
+        suitColor : ['spades', 'clubs'].includes(suit) ? 'black' : 'red',
         suit,
         icon,
         rank,
@@ -57,16 +58,12 @@ function buildCardNode(card){
 function moveCard(card, newSlotName, upturned = true){
   card.slotName && slots[card.slotName].cards.pop();
 
-  card.node.dataset.upturned = upturned ? '1': '0';
-  card.node.dataset.debug = `${card.index}-${newSlotName}`; // TODO: remove after debug
-
   slots[newSlotName].cards.push(card);
   slots[newSlotName].node.insertBefore(card.node, null);
 
   card.slotName = newSlotName;
   card.upturned = upturned;
   card.node.dataset.upturned = upturned ? '1': '0';
-  card.node.dataset.debug = `${card.index}-${newSlotName}`; // TODO: remove after debug
 
   toggleActiveCard();
 }
@@ -108,11 +105,16 @@ function toggleActiveCard(card = null){
   }
 }
 
+function flipCard(card){
+  card.upturned = true;
+  card.node.dataset.upturned = '1';
+}
+
 function isLast(card){
   return slots[card.slotName].cards.at(-1).index === card.index;
 }
 
-function isMovable(card){
+function canBeMoved(card){
   if (card.slotName.startsWith('pile')) {
     return card.upturned || isLast(card);
   } else {
@@ -120,29 +122,49 @@ function isMovable(card){
   }
 }
 
+function canBePlacedHere(clickedCard){
+  if (clickedCard.slotName.startsWith('foundation')) {
+    return (
+      clickedCard.suit === activeCard.suit &&
+      ranks.indexOf(clickedCard.rank) === ranks.indexOf(activeCard.rank) - 1
+    )
+  }
+  if (clickedCard.slotName.startsWith('pile')) {
+    return (
+      clickedCard.suitColor !== activeCard.suitColor &&
+      ranks.indexOf(clickedCard.rank) === ranks.indexOf(activeCard.rank) + 1
+    );
+  }
+  return false;
+}
+
 function cardClickHandler(e){
   const card = deck[e.currentTarget.dataset.index];
 
-  if (card.slotName === 'stock' && isMovable(card)) {
+  if (card.slotName === 'stock' && canBeMoved(card)) {
   	moveCard(card, 'waste');
     return;
   }
 
+  if (card.slotName.startsWith('pile') && !card.upturned && isLast(card)) {
+    flipCard(card);
+    return;
+  }
+
   if (activeCard) {
-    if (activeCard.index === card.index) {
-      toggleActiveCard();
-    } else {
-      console.log('moving');
-      // TODO: check if card can be moved here, then move
+    if (activeCard.index !== card.index && canBePlacedHere(card)) {
+      moveCard(activeCard, card.slotName);
     }
+    toggleActiveCard();
+
   } else {
-    if (isMovable(card)) {
+    if (canBeMoved(card)) {
       toggleActiveCard(card);
     }
   }
 }
 
-function moveWasteToStock(){
+function stockClickHandler(){
   if (slots.stock.cards.length > 0) {
   	return;
   }
@@ -151,6 +173,32 @@ function moveWasteToStock(){
   wasteCardIndexes.reverse().forEach(cardIndex => {
     moveCard(deck[cardIndex], 'stock', false);
   });
+}
+
+function foundationClickHandler(e){
+  const slotName = e.currentTarget.id;
+  if (slots[slotName].cards.length > 0) {
+  	return;
+  }
+
+  if (activeCard.rank === 'A') {
+  	moveCard(activeCard, slotName);
+  } else {
+    toggleActiveCard();
+  }
+}
+
+function pileClickHandler(e){
+  const slotName = e.currentTarget.id;
+  if (slots[slotName].cards.length > 0) {
+    return;
+  }
+
+  if (activeCard.rank === 'K') {
+    moveCard(activeCard, slotName);
+  } else {
+    toggleActiveCard();
+  }
 }
 
 function placeCardsOnTable(){
@@ -176,7 +224,14 @@ function initListeners(){
     card.node.addEventListener('click', cardClickHandler);
   });
 
-  document.querySelector('#stock').addEventListener('click', moveWasteToStock);
+  document.querySelector('#stock').addEventListener('click', stockClickHandler);
+
+  for (let i = 0, len = 4; i < len; i++) {
+    document.querySelector('#foundation' + i).addEventListener('click', foundationClickHandler);
+  }
+  for (let i = 0, len = 7; i < len; i++) {
+    document.querySelector('#pile' + i).addEventListener('click', pileClickHandler);
+  }
 }
 
 placeCardsOnTable();
