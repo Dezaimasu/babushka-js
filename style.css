@@ -38,8 +38,9 @@ html, body {
 #table[data-debug='true'] #stock-waste-foundations > #stock > .card:not(:first-child),
 #table[data-debug='true'] #stock-waste-foundations > #waste > .card:not(:first-child),
 #table[data-debug='true'] #stock-waste-foundations > .foundation > .card:not(:first-child),
-#table[data-debug='true'] #piles .pile .card:not(:first-child) {
-  margin-top: -120px;
+#table[data-debug='true'] #piles .pile .card:not(:first-child),
+#piles .pile .card[data-blocks-card='true'] {
+  margin-top: -115px;
 }
 
 .card,

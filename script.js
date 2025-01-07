@@ -5,9 +5,15 @@ function toggleDebug(forceDebug = null){
   document.querySelector('#table').dataset.debug = debug || '';
 }
 
-function updateCardDebugInfo(card){
-  const {node, ...debugData} = card;
-  card.node.dataset.debug = JSON.stringify(debugData, null, ' ');
+function updateCardsDebugInfo(){
+  if (deck.find(c => !c.node)) {
+  	return;
+  }
+
+  deck.forEach(card => {
+    const {node, ...debugData} = card;
+    card.node.dataset.debug = JSON.stringify(debugData, null, ' ');
+  });
 }
 
 const suits = {
@@ -37,6 +43,7 @@ function buildDeck(){
         node      : null,
         slotName  : null,
         upturned  : false,
+        blocksCard: false,
         suitColor : ['spades', 'clubs'].includes(suit) ? 'black' : 'red',
         suit,
         icon,
@@ -80,8 +87,22 @@ function moveCard(card, newSlotName, upturned = true){
   card.upturned = upturned;
   card.node.dataset.upturned = upturned || '';
 
+  if (card.slotName.startsWith('pile')) {
+    let hasMultipleUpturned = false;
+
+    slots[card.slotName].cards.forEach(cardInPile => {
+      const blocksCard = hasMultipleUpturned;
+      cardInPile.blocksCard = blocksCard;
+      cardInPile.node.dataset.blocksCard = blocksCard || '';
+
+      if (cardInPile.upturned) {
+        hasMultipleUpturned = true;
+      }
+    });
+  }
+
   toggleActiveCard();
-  updateCardDebugInfo(card);
+  updateCardsDebugInfo();
 }
 
 function moveCardsPile(card, newSlotName){
@@ -134,7 +155,7 @@ function toggleActiveCard(card = null){
 function flipCard(card){
   card.upturned = true;
   card.node.dataset.upturned = card.upturned;
-  updateCardDebugInfo(card);
+  updateCardsDebugInfo();
 }
 
 function isLast(card){
