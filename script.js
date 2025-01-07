@@ -5,6 +5,11 @@ function toggleDebug(forceDebug = null){
   document.querySelector('#table').dataset.debug = debug || '';
 }
 
+function updateCardDebugInfo(card){
+  const {node, ...debugData} = card;
+  card.node.dataset.debug = JSON.stringify(debugData, null, ' ');
+}
+
 const suits = {
   spades  : '♠',
   clubs   : '♣',
@@ -57,9 +62,6 @@ function buildCardNode(card){
   card.node.dataset.suit = card.suit;
   card.node.dataset.index = card.index;
 
-  const {node, ...debugData} = card;
-  card.node.dataset.debug = JSON.stringify(debugData, null, ' ');
-
   card.node.querySelector('.card-top').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div>${card.rank}<br>${card.icon}</div>`;
   card.node.querySelector('.card-mid').innerHTML = `<div>${card.icon}</div>`;
   card.node.querySelector('.card-bot').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div>${card.rank}<br>${card.icon}</div>`;
@@ -79,6 +81,7 @@ function moveCard(card, newSlotName, upturned = true){
   card.node.dataset.upturned = upturned || '';
 
   toggleActiveCard();
+  updateCardDebugInfo(card);
 }
 
 function moveCardsPile(card, newSlotName){
@@ -131,6 +134,7 @@ function toggleActiveCard(card = null){
 function flipCard(card){
   card.upturned = true;
   card.node.dataset.upturned = card.upturned;
+  updateCardDebugInfo(card);
 }
 
 function isLast(card){
@@ -238,7 +242,7 @@ function placeCardsOnTable(){
     }
   }
 
-  const cardsInPiles = 28;
+  const cardsInPiles = cardIndex;
   deck.slice(cardsInPiles).forEach(card => {
     placeCardOnTable(card, 'stock', false);
   });
