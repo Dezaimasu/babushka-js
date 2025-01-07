@@ -245,7 +245,7 @@ function pileClickHandler(e){
   }
 
   if (activeCard.rank === 'K') {
-    moveCard(activeCard, slotName);
+    moveCardsPile(activeCard, slotName);
   } else {
     toggleActiveCard();
   }
