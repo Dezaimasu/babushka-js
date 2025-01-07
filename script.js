@@ -1,3 +1,10 @@
+let debug; // Ctrl+Alt+D
+
+function toggleDebug(forceDebug = null){
+  debug = forceDebug === null ? !debug : forceDebug;
+  document.querySelector('#table').dataset.debug = debug || '';
+}
+
 const suits = {
   spades  : '♠',
   clubs   : '♣',
@@ -50,9 +57,12 @@ function buildCardNode(card){
   card.node.dataset.suit = card.suit;
   card.node.dataset.index = card.index;
 
-  card.node.querySelector('.card-top').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div class="debug"></div><div>${card.rank}<br>${card.icon}</div>`;
+  const {node, ...debugData} = card;
+  card.node.dataset.debug = JSON.stringify(debugData, null, ' ');
+
+  card.node.querySelector('.card-top').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div>${card.rank}<br>${card.icon}</div>`;
   card.node.querySelector('.card-mid').innerHTML = `<div>${card.icon}</div>`;
-  card.node.querySelector('.card-bot').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div class="debug"></div><div>${card.rank}<br>${card.icon}</div>`;
+  card.node.querySelector('.card-bot').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div>${card.rank}<br>${card.icon}</div>`;
 }
 
 function moveCard(card, newSlotName, upturned = true){
@@ -66,7 +76,7 @@ function moveCard(card, newSlotName, upturned = true){
 
   card.slotName = newSlotName;
   card.upturned = upturned;
-  card.node.dataset.upturned = upturned ? '1': '0';
+  card.node.dataset.upturned = upturned || '';
 
   toggleActiveCard();
 }
@@ -120,7 +130,7 @@ function toggleActiveCard(card = null){
 
 function flipCard(card){
   card.upturned = true;
-  card.node.dataset.upturned = '1';
+  card.node.dataset.upturned = card.upturned;
 }
 
 function isLast(card){
@@ -247,7 +257,14 @@ function initListeners(){
   for (let i = 0, len = 7; i < len; i++) {
     document.querySelector('#pile' + i).addEventListener('click', pileClickHandler);
   }
+
+  document.addEventListener('keyup', e => {
+    if (e.code === 'KeyD' && e.ctrlKey && e.altKey) {
+      toggleDebug();
+    }
+  });
 }
 
 placeCardsOnTable();
 initListeners();
+toggleDebug(false);

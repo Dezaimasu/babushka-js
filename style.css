@@ -19,6 +19,7 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  min-height: 240px;
   padding: 50px 100px;
 }
 
@@ -27,22 +28,17 @@ html, body {
   width: 100px;
 }
 
-#stock-waste-foundations > #stock > .card:not(:first-child) {
-  /*margin-top: -139px;*/
-  margin-top: -120px; /* TODO: remove after debug */
-}
-
-#stock-waste-foundations > #waste > .card:not(:first-child) {
-  /*margin-top: -139px;*/
-  margin-top: -120px; /* TODO: remove after debug */
-}
-
-#stock-waste-foundations > .foundation > .card:not(:first-child) {
-  /*margin-top: -139px;*/
-  margin-top: -120px; /* TODO: remove after debug */
-}
-
+#stock-waste-foundations > #stock > .card:not(:first-child),
+#stock-waste-foundations > #waste > .card:not(:first-child),
+#stock-waste-foundations > .foundation > .card:not(:first-child),
 #piles .pile .card:not(:first-child) {
+  margin-top: -136px;
+}
+
+#table[data-debug='true'] #stock-waste-foundations > #stock > .card:not(:first-child),
+#table[data-debug='true'] #stock-waste-foundations > #waste > .card:not(:first-child),
+#table[data-debug='true'] #stock-waste-foundations > .foundation > .card:not(:first-child),
+#table[data-debug='true'] #piles .pile .card:not(:first-child) {
   margin-top: -120px;
 }
 
@@ -72,11 +68,11 @@ html, body {
   pointer-events: none;
 }
 
-.card[data-upturned='0'] {
+.card[data-upturned=''] {
   background-color: aquamarine;
 }
-.card[data-upturned='0'] * {
-  /*display: none !important;*/ /* TODO: remove after debug */
+#table[data-debug=''] .card[data-upturned=''] * {
+  display: none !important;
 }
 
 .card[data-suit='spades'],
@@ -111,11 +107,13 @@ html, body {
   font-size: 32px;
 }
 
-/* TODO: remove after debug */
-.card[data-debug]::before {
+#table[data-debug='true'] .card[data-debug]:hover::before {
   content: attr(data-debug);
   position: absolute;
-  color: darkblue;
-  left: 20px;
+  left: 80px;
   top: 1px;
+  white-space: pre;
+  background: black;
+  color: white;
+  z-index: 1;
 }
