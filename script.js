@@ -71,9 +71,8 @@ function buildCardNode(card){
   card.node.dataset.suit = card.suit;
   card.node.dataset.index = card.index;
 
-  card.node.querySelector('.card-top').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div>${card.rank}<br>${card.icon}</div>`;
-  card.node.querySelector('.card-mid').innerHTML = `<div>${card.icon}</div>`;
-  card.node.querySelector('.card-bot').innerHTML = `<div>${card.rank}<br>${card.icon}</div><div>${card.rank}<br>${card.icon}</div>`;
+  card.node.querySelectorAll('.rank').forEach(node => node.innerText = card.rank);
+  card.node.querySelectorAll('.icon').forEach(node => node.innerText = card.icon);
 }
 
 function moveCard(card, newSlotName, upturned = true){
