@@ -145,6 +145,7 @@ const styleElem = document.createElement('style');
 document.head.appendChild(styleElem);
 
 let activeCard = null;
+let slotToPlaceOn = null;
 let movedCards = []; // {index, x, y}[]
 
 function toggleActiveCard(card = null){
@@ -176,26 +177,30 @@ function canBeMoved(card){
   }
 }
 
-function canBePlacedHere(clickedCard){
-  if (clickedCard.slotName.startsWith('foundation')) {
+function canBePlacedOnThisCard(potentialCardToPlaceOn){
+  if (potentialCardToPlaceOn.slotName.startsWith('foundation')) {
     return (
-      clickedCard.suit === activeCard.suit &&
-      ranks.indexOf(clickedCard.rank) === ranks.indexOf(activeCard.rank) - 1
+      potentialCardToPlaceOn.suit === activeCard.suit &&
+      ranks.indexOf(potentialCardToPlaceOn.rank) === ranks.indexOf(activeCard.rank) - 1
     )
   }
-  if (clickedCard.slotName.startsWith('pile')) {
+  if (potentialCardToPlaceOn.slotName.startsWith('pile')) {
     return (
-      clickedCard.suitColor !== activeCard.suitColor &&
-      ranks.indexOf(clickedCard.rank) === ranks.indexOf(activeCard.rank) + 1
+      potentialCardToPlaceOn.suitColor !== activeCard.suitColor &&
+      ranks.indexOf(potentialCardToPlaceOn.rank) === ranks.indexOf(activeCard.rank) + 1
     );
   }
   return false;
 }
 
+function getEventCard(e){
+  return deck[e.target.dataset.index];
+}
+
 function cardClickHandler(e){
   e.stopPropagation();
 
-  const card = deck[e.currentTarget.dataset.index];
+  const card = getEventCard(e);
 
   if (card.slotName === 'stock' && canBeMoved(card)) {
   	moveCard(card, 'waste');
@@ -212,7 +217,7 @@ function cardClickHandler(e){
   }
 
   if (activeCard) {
-    if (activeCard.index !== card.index && canBePlacedHere(card)) {
+    if (activeCard.index !== card.index && canBePlacedOnThisCard(card)) {
       moveCardsPile(card.slotName);
     }
     toggleActiveCard();
@@ -240,12 +245,12 @@ function foundationClickHandler(e){
     return;
   }
 
-  const slotName = e.currentTarget.id;
+  const slotName = e.target.id;
   if (slots[slotName].cards.length > 0) {
   	return;
   }
 
-  if (activeCard.rank === 'A') {
+  if (activeCard && activeCard.rank === 'A') {
   	moveCard(activeCard, slotName);
   } else {
     toggleActiveCard();
@@ -257,7 +262,7 @@ function pileClickHandler(e){
     return;
   }
 
-  const slotName = e.currentTarget.id;
+  const slotName = e.target.id;
   if (slots[slotName].cards.length > 0) {
     return;
   }
@@ -280,7 +285,7 @@ function mousedownHandler(e){
   }
 
   dragging = true;
-  const card = deck[e.target.dataset.index];
+  const card = getEventCard(e);
   toggleActiveCard(card);
 
   const cardsToMove = getCardsPile();
@@ -296,7 +301,7 @@ function mousedownHandler(e){
 }
 
 function mousemoveHandler(e){
-  if (!dragMode) {
+  if (!dragMode || !dragging) {
     return;
   }
   movedCards.forEach(mc => {
@@ -304,6 +309,28 @@ function mousemoveHandler(e){
     card.node.style.left = (e.clientX - mc.x) + 'px';
     card.node.style.top = (e.clientY - mc.y) + 'px';
   });
+}
+
+function mouseoverHandler(e){
+  if (!dragMode || !dragging) {
+    return;
+  }
+
+  const cardUnderCursor = getEventCard(e);
+  if (cardUnderCursor) {
+    if (activeCard.index !== cardUnderCursor.index && canBePlacedOnThisCard(cardUnderCursor)) {
+      slotToPlaceOn = cardUnderCursor.slotName;
+    }
+  } else {
+    const slotName = e.target.getAttribute('id');
+
+    if (
+      (slotName.startsWith('foundation') && activeCard.rank === 'A') ||
+      (/^pile\d$/.test(slotName) && slots[slotName].cards.length === 0 && activeCard.rank === 'K')
+    ) {
+      slotToPlaceOn = slotName;
+    }
+  }
 }
 
 function mouseupHandler(e){
@@ -321,27 +348,10 @@ function mouseupHandler(e){
   movedCards = [];
   dragging = false;
 
+  slotToPlaceOn && moveCardsPile(slotToPlaceOn);
+  slotToPlaceOn = null;
+
   toggleActiveCard();
-}
-
-function cardMousemoveHandler(e){
-  if (!dragMode || !dragging) {
-    return;
-  }
-
-  movedCards.forEach(mc => {
-    const card = deck[mc.i];
-    card.node.style.left = (e.clientX - mc.x) + 'px';
-    card.node.style.top = (e.clientY - mc.y) + 'px';
-  });
-}
-
-function cardMouseoverHandler(e){
-  // if (!dragMode || !dragging) {
-  //   return;
-  // }
-
-  console.log('over', e);
 }
 
 function placeCardsOnTable(){
@@ -365,8 +375,6 @@ function placeCardsOnTable(){
 function initListeners(){
   deck.forEach(card => {
     card.node.addEventListener('click', cardClickHandler);
-    card.node.addEventListener('mousemove', cardMousemoveHandler);
-    card.node.addEventListener('mouseover', cardMouseoverHandler);
   });
 
   document.querySelector('#stock').addEventListener('click', stockClickHandler);
@@ -390,9 +398,10 @@ function initListeners(){
   });
 
   document.addEventListener('mousedown', mousedownHandler);
-  // document.addEventListener('mousemove', mousemoveHandler);
+  document.addEventListener('mousemove', mousemoveHandler);
+  document.addEventListener('mouseover', mouseoverHandler);
   document.addEventListener('mouseup', mouseupHandler);
-  // document.addEventListener('contextmenu', e => e.preventDefault()); // TODO
+  document.addEventListener('contextmenu', e => !debug && e.preventDefault());
 }
 
 placeCardsOnTable();
