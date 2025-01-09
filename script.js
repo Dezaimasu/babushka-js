@@ -388,13 +388,10 @@ function initListeners(){
   }
 
   document.addEventListener('keyup', e => {
-    if (e.code === 'KeyD' && e.ctrlKey && e.altKey) {
-      toggleDebug();
+    if (e.ctrlKey && e.altKey) {
+      e.code === 'KeyD' && toggleDebug();
+      e.code === 'KeyM' && (dragMode = !dragMode);
     }
-  });
-
-  document.querySelector('input[name="dragMode"]').addEventListener('input', e => {
-    dragMode = e.target.checked;
   });
 
   document.addEventListener('mousedown', mousedownHandler);
