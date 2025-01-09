@@ -16,6 +16,8 @@ function updateCardsDebugInfo(){
   });
 }
 
+let dragAndDrop = true;
+
 const suits = {
   spades  : '♠',
   clubs   : '♣',
@@ -105,13 +107,16 @@ function moveCard(card, newSlotName, upturned = true){
   updateCardsDebugInfo();
 }
 
-function moveCardsPile(card, newSlotName){
-  const slotCards = slots[card.slotName].cards,
-    cardIndexInSlot = slotCards.indexOf(card),
-    cardIndexesToMove = slotCards.slice(cardIndexInSlot).map(card => card.index);
+function getCardsPile(){
+  const slotCards = slots[activeCard.slotName].cards,
+    cardIndexInSlot = slotCards.indexOf(activeCard);
 
-  cardIndexesToMove.forEach(cardIndex => {
-    moveCard(slotCards.find(card => card.index === cardIndex), newSlotName);
+  return slotCards.slice(cardIndexInSlot);
+}
+
+function moveCardsPile(newSlotName){
+  getCardsPile().forEach(card => {
+    moveCard(card, newSlotName);
   });
 }
 
@@ -140,13 +145,14 @@ const styleElem = document.createElement('style');
 document.head.appendChild(styleElem);
 
 let activeCard = null;
+let movedCards = []; // {index, x, y}[]
 
 function toggleActiveCard(card = null){
-  styleElem.sheet.cssRules.length > 0 && styleElem.sheet.deleteRule(0);
+  // styleElem.sheet.cssRules.length > 0 && styleElem.sheet.deleteRule(0);
 
   if (card) {
     activeCard = card;
-    styleElem.sheet.insertRule(`[data-index='${activeCard.index}'] {box-shadow: 4px 4px purple inset, -4px -4px purple inset;}`);
+    // styleElem.sheet.insertRule(`[data-index='${activeCard.index}'] {box-shadow: 4px 4px purple inset, -4px -4px purple inset;}`);
   } else {
     activeCard = null;
   }
@@ -201,9 +207,13 @@ function cardClickHandler(e){
     return;
   }
 
+  if (dragAndDrop) {
+    return;
+  }
+
   if (activeCard) {
     if (activeCard.index !== card.index && canBePlacedHere(card)) {
-      moveCardsPile(activeCard, card.slotName);
+      moveCardsPile(card.slotName);
     }
     toggleActiveCard();
 
@@ -226,6 +236,10 @@ function stockClickHandler(){
 }
 
 function foundationClickHandler(e){
+  if (dragAndDrop) {
+    return;
+  }
+
   const slotName = e.currentTarget.id;
   if (slots[slotName].cards.length > 0) {
   	return;
@@ -239,16 +253,65 @@ function foundationClickHandler(e){
 }
 
 function pileClickHandler(e){
+  if (dragAndDrop) {
+    return;
+  }
+
   const slotName = e.currentTarget.id;
   if (slots[slotName].cards.length > 0) {
     return;
   }
 
-  if (activeCard.rank === 'K') {
-    moveCardsPile(activeCard, slotName);
+  if (activeCard && activeCard.rank === 'K') {
+    moveCardsPile(slotName);
   } else {
     toggleActiveCard();
   }
+}
+
+function dragStartHandler(e){
+  e.dataTransfer.setDragImage(document.querySelector('.empty'), 0, 0);
+
+  const card = deck[e.target.dataset.index];
+  toggleActiveCard(card);
+
+  const cardsToMove = getCardsPile();
+  cardsToMove.forEach((card, i) => {
+    movedCards.push({
+      i: card.index,
+      x: e.clientX,
+      y: e.clientY,
+    });
+    card.node.style.zIndex = '1';
+  });
+}
+
+function dragOverHandler(e){
+  movedCards.forEach(mc => {
+    const card = deck[mc.i];
+    card.node.style.left = (e.clientX - mc.x) + 'px';
+    card.node.style.top = (e.clientY - mc.y) + 'px';
+  });
+}
+
+function dragEndHandler(e){
+  movedCards.forEach(mc => {
+    const card = deck[mc.i];
+    card.node.style.left = 'auto';
+    card.node.style.top = 'auto';
+    card.node.style.zIndex = 'auto';
+  });
+  movedCards = [];
+
+  toggleActiveCard();
+}
+
+function deskDragHandler(e){
+  movedCards.forEach(mc => {
+    const card = deck[mc.i];
+    card.node.style.left = (e.clientX - mc.x) + 'px';
+    card.node.style.top = (e.clientY - mc.y) + 'px';
+  });
 }
 
 function placeCardsOnTable(){
@@ -269,16 +332,35 @@ function placeCardsOnTable(){
   });
 }
 
+function dragoverHandler(e){
+  console.log('dragover', e);
+  e.preventDefault();
+}
+function dragenterHandler(e){
+  console.log('dragenter', e);
+  e.preventDefault();
+}
+function dropHandler(e){
+  console.log('drop', e);
+  e.preventDefault();
+}
+
 function initListeners(){
   deck.forEach(card => {
     card.node.addEventListener('click', cardClickHandler);
+    card.node.addEventListener('dragstart', dragStartHandler);
+    card.node.addEventListener('dragend', dragEndHandler);
   });
 
   document.querySelector('#stock').addEventListener('click', stockClickHandler);
 
   for (let i = 0, len = 4; i < len; i++) {
     document.querySelector('#foundation' + i).addEventListener('click', foundationClickHandler);
+    document.querySelector('#foundation' + i).addEventListener('drop', dropHandler);
+    document.querySelector('#foundation' + i).addEventListener('dragover', dragoverHandler);
+    document.querySelector('#foundation' + i).addEventListener('dragenter', dragenterHandler);
   }
+
   for (let i = 0, len = 7; i < len; i++) {
     document.querySelector('#pile' + i).addEventListener('click', pileClickHandler);
   }
@@ -288,6 +370,15 @@ function initListeners(){
       toggleDebug();
     }
   });
+
+  document.querySelector('input[name="isDrag"]').addEventListener('input', e => {
+    dragAndDrop = e.target.checked;
+  });
+
+  document.addEventListener('dragover', deskDragHandler); // this event listener will prevent all other dragover/dragover/drop events to happen
+  // mousemove can't be used to track coordinates because mousemove is not triggered when drag is happening
+  // drag event can't be used as well because all coordinates in it are set to zero in Firefox, https://bugzilla.mozilla.org/show_bug.cgi?id=505521#c80 fucking 15 years old bug
+  // so the only options are to either ditch drag api completely and use mousemove/mouseenter events, or keep track of coordinates of all interactive elements and check if the dragover event is currently over one of them
 }
 
 placeCardsOnTable();

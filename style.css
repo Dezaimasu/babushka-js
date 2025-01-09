@@ -108,6 +108,10 @@ html, body {
   font-size: 32px;
 }
 
+.empty {
+  display: none;
+}
+
 #table[data-debug='true'] .card[data-debug]:hover::before {
   content: attr(data-debug);
   position: absolute;
